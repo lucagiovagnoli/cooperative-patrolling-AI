@@ -12,14 +12,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public class Chromosome : IComparable<Chromosome>{
+public class Chromosome /* : IComparable<Chromosome>*/{
 
 	/* These need to be set by initChromosome before creating Chromosomes !!*/
 	public static Vector3[] customersPositions=null;
 	public static Vector3[] dronesPositions=null;
 	public static int N=-1,M=-1;
 	public static int Ngenes;	
-	public static List<Vector3> [,] allPairPathsMatrix; //not used yet
+	public static LinkedList<Vector3> [,] allPairPathsMatrix; //not used yet
 
 	private static Drone[] drones=null;
 	//private static Astar [,] allPairAstarMatrix;
@@ -47,7 +47,7 @@ public class Chromosome : IComparable<Chromosome>{
 	private static void computeAllPairDistancesAndPaths(){
 
 		allPairDistancesMatrix = new float[Ngenes,Ngenes];
-		allPairPathsMatrix = new List<Vector3>[Ngenes,Ngenes];
+		allPairPathsMatrix = new LinkedList<Vector3>[Ngenes,Ngenes];
 
 		Astar pathFinder = new Astar(0.1f,0.5f);
 		Vector3 pt1, pt2;
@@ -60,7 +60,7 @@ public class Chromosome : IComparable<Chromosome>{
 				if(pathFinder.setNewTargetPosition(pt2)==true){
 					float solutionCost = 0;
 					pathFinder.AstarBestPathFrom(pt1);
-					List<Vector3> path = pathFinder.getSolution();
+					LinkedList<Vector3> path = pathFinder.getSolution();
 					allPairDistancesMatrix[i,z] = pathFinder.getSolutionCost();
 					allPairDistancesMatrix[z,i] = pathFinder.getSolutionCost();
 					allPairPathsMatrix[i,z] = path;
@@ -90,7 +90,7 @@ public class Chromosome : IComparable<Chromosome>{
 		for (int i=0; i<Ngenes; i++) {
 			genes [i] = i;	
 		}
-		this.fitness = computeFitnessAstar();
+		this.fitness = computeFitnessAstarMinimizeTime();
 	}
 
 	/* Constructor by already-existing array */
@@ -102,7 +102,7 @@ public class Chromosome : IComparable<Chromosome>{
 		for (int i=0; i<Ngenes; i++) {
 			genes [i] = vett[i];	
 		}
-		this.fitness = computeFitnessAstar();
+		this.fitness = computeFitnessAstarMinimizeTime();
 	}
 
 	/* Copy Constructor */
@@ -117,12 +117,12 @@ public class Chromosome : IComparable<Chromosome>{
 
 	public void shuffleChromosome(){
 		MyUtils.FisherYatesShuffle (genes);
-		this.fitness = computeFitnessAstar();
+		this.fitness = computeFitnessAstarMinimizeTime();
 	}
 
 	/* Pair distances between point computed by Astar
 	 * Fitness equal to TOTAL length walked by drones */
-	private float computeFitnessAstar(){
+	private float computeFitnessAstarTotalLength(){
 
 		int lastPoint,currentPoint;
 		float tot = 0;
@@ -147,11 +147,51 @@ public class Chromosome : IComparable<Chromosome>{
 			}
 		}
 
-		/* INSERT PENALTY for CAPACITY CONSTRAINT*/
 		return tot;
 	}
 
-	/* Euclidean compute Fitness
+	/* Pair distances between points computed by Astar
+	 * Time for visiting all the position is equal to time for walking the max route, so fitness 
+	 * is equal to length of the maximal route plus a weighted term considering the total walked distance*/
+	private float computeFitnessAstarMinimizeTime(){
+
+		float length = 0,maxSoFar = 0,tot=0;
+		int lastPoint=0,currentPoint;
+		int i,c;
+		//		Debug.Log ("Computing fitness: "+this);
+		
+		/* Scan till the first drone */
+		for (i=0; i<Ngenes; i++) {
+			if(isDrone(genes[i])) {
+				lastPoint = genes[i];
+                i++; // start from first customer
+                break;
+            }
+        }
+        
+		for (/* using i from last iteration */ c=0; c<Ngenes /*first drone scanned already*/; c++, i++,i=i%Ngenes) {
+            if(isDrone(genes[i])) {
+				if(length>maxSoFar) maxSoFar = length;
+				length = 0;
+				lastPoint = genes[i];
+				//				Debug.Log("Change drone: "+lastPosition);
+			}
+			else{ // case of customer position
+				currentPoint = genes[i]; 
+				//				Debug.Log("Customer: "+currentPosition);
+				length += allPairDistancesMatrix[lastPoint,currentPoint];
+				tot += allPairDistancesMatrix[lastPoint,currentPoint];
+                
+                //				Debug.Log("distanza: "+(currentPosition-lastPosition).magnitude);
+                lastPoint = currentPoint;
+            }
+        }
+        
+		//return maxSoFar+tot takes into account also the total length
+		return maxSoFar+tot*0.01f;
+    }
+    
+    /* Euclidean compute Fitness
 	 * Fitness equal to TOTAL length walked by drones */
 	private float computeFitnessEuclidean(){
 
@@ -320,37 +360,40 @@ public class Chromosome : IComparable<Chromosome>{
 		genes[bit1] = genes[bit2];
 		genes[bit2] = temp;
 
-		this.fitness = this.computeFitnessAstar();
+		this.fitness = this.computeFitnessAstarMinimizeTime();
 	}
 
 
-	/* Fitness COMPARATOR */
+	/* Fitness COMPARATOR 
 	public int CompareTo(Chromosome other){
 		if(this.fitness > other.fitness) return 1;
 		if(this.fitness == other.fitness) return 0;
 		return -1;
-	}
+	}*/
 
 	/* OPERATOR OVERLOADING */
-	public static bool operator ==(Chromosome a, Chromosome b)
-	{
-		// If both are null, or both are same instance, return true.
-		if (System.Object.ReferenceEquals(a, b)) return true;
-		
-		// If one is null, but not both, return false.
-		if (((object)a == null) || ((object)b == null)) return false;
-		
-		// My equality:
-		for (int i=0; i<a.genes.Length; i++) {
-			if (a.genes [i] != b.genes [i]) return false;
+	public override bool Equals(System.Object obj) {
+
+		Chromosome other = (Chromosome) obj;
+		// If parameter is null return false:
+		if (other == null) return false;
+
+        // My equality:
+        for (int i=0; i<this.genes.Length; i++) {
+			if (this.genes [i] != other.genes [i]) return false;
 		}
 		return true;
 	}
-	
-	public static bool operator !=(Chromosome a, Chromosome b){
-		return !(a == b);
-	}
 
+	public override int GetHashCode(){
+
+		int temp = genes[0]*0;
+		// My hash:
+		for (int i=1; i<this.genes.Length; i++) {
+			temp = (temp*i)^(genes[i]*i); //XOR operation
+		}
+		return temp;
+	}
 
 	/* ToString */
 	public override string ToString(){

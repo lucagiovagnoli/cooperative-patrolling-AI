@@ -10,17 +10,38 @@
 using UnityEngine;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Tester{
 
-	public Tester (){
-	
-	}
-
-	public bool testFitness (Vector3[] customers, Drone[] drones){
+	public Tester(Vector3[] customers, Drone[] drones){
 		/* Initialize Chromosome static singleton variables 
 		 * (mapping between coding of solution and real points) */
 		Chromosome.initChromosome (customers, drones);
+	}
+
+	public void testEquality(){
+
+		Chromosome c1 = new Chromosome();
+		Chromosome c2 = new Chromosome();
+
+		Debug.Log("Equality check:"+c1.Equals(c2));
+		Debug.Log("c1 hash:"+c1.GetHashCode());
+		Debug.Log("c2 hash:"+c2.GetHashCode());
+
+		HashSet<Chromosome> map = new HashSet<Chromosome>();
+		map.Add(c1);
+		if(map.Contains(c2)) Debug.Log("nell'hash table ce ne sta uno uguale!");
+
+	/*	Vector3 v1 = new Vector3(2,2,2);
+		Vector3 v2 = new Vector3(2,2,2);
+		Debug.Log("Equality check:"+v1.Equals(v2));
+		Debug.Log("v1 hash:"+v1.GetHashCode());
+		Debug.Log("v2 hash:"+v2.GetHashCode()); */
+
+	}
+
+	public bool testFitness (){
 
 		Chromosome c1 = new Chromosome (new int[]{4,0,1,2,5,3});
 		VRPsolution csol = c1.buildSolution ();

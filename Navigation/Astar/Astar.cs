@@ -7,13 +7,13 @@ public class Astar {
 
 	//public static string[] debugMatrices = new string[] {"* - -\n- - -\n- - -","- * -\n- - -\n- - -","- - *\n- - -\n- - -","- - -\n- - *\n- - -","- - -\n* - -\n- - -","- - -\n- - -\n- - *","- - -\n- - -\n- * -","- - -\n- - -\n* - -"};
 	private static float[,] directions = new float[,] {{-1.0f,1.0f},{0.0f,1.0f},{1.0f,1.0f},{1.0f,0.0f},{-1.0f,0.0f},{1.0f,-1.0f},{0.0f,-1.0f},{-1.0f,-1.0f}};
-	private static GameObject[] obstacles;
+	public static GameObject[] obstacles;
 
 	private Vector3 startingPosition;
 	private Vector3 targetPosition;
 	private float playerRadius;
 	private float precisionAstar; 
-	private List<Vector3> result = null;
+	private LinkedList<Vector3> result = null;
 	private float solutionCost=0;
 	private bool debugDraws = false;
 
@@ -61,11 +61,12 @@ public class Astar {
 	}
 
 	private void buildSolution (SampledPositionAstar currentSampledPosition){
-		this.result = new List<Vector3>();
+		this.result = new LinkedList<Vector3>();
+		this.result.AddFirst(currentSampledPosition.position); // add final position, also if same of initial
 		this.solutionCost = currentSampledPosition.pastCost; // save cost of solution
-		while(currentSampledPosition.lastPosition.lastPosition != null){
+		while(currentSampledPosition.lastPosition != null){
 			if(debugDraws==true) Debug.DrawLine(currentSampledPosition.position,currentSampledPosition.lastPosition.position, Color.green,15.0f);
-			result.Insert(0,currentSampledPosition.position);
+			result.AddFirst(currentSampledPosition.position);
 			currentSampledPosition = currentSampledPosition.lastPosition;					
 		}
 	}
@@ -115,11 +116,11 @@ public class Astar {
 		return false;
 	}
 
-	public List<Vector3> getSolution(){return result;}
+	public LinkedList<Vector3> getSolution(){return result;}
 	public float getSolutionCost(){ return solutionCost;}
 
 	public void drawAstar(){
-	 	List<Vector3>.Enumerator it = result.GetEnumerator();
+		LinkedList<Vector3>.Enumerator it = result.GetEnumerator();
 		Vector3 lastPoint = it.Current;
 		while (it.MoveNext()) {
 			Debug.DrawLine(lastPoint,it.Current,Color.green,15.0f);

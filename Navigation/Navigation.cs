@@ -8,23 +8,23 @@ public class Navigation {
 	
 	private VehicleModel model;
 	private Astar pathFinder = null;
-	private List<Vector3> path = null;
+	private LinkedList<Vector3> path = null;
 	private Vector3 goalPosition;
-	private List<Vector3>.Enumerator en;
+	private LinkedList<Vector3>.Enumerator en;
 	private bool isPathInProgress = false;
 
 	public Navigation (GameObject oggetto) {
 		model = new CarVehicleModel (oggetto.gameObject);
 	}
 
-	public void navigateFromATo(Vector3 destination){
+	public void navigateEuclideanTo(Vector3 destination){
 		model.updateModel(destination);
 	}
 	public void stop(){
 		model.updateModel(model.getVehicle().transform.position);
 	}
 
-	public void computeAstar(Vector3 goalPosition){
+	private void computeAstar(Vector3 goalPosition){
 		this.goalPosition = goalPosition;
 		this.goalPosition.y = model.getVehicle().transform.position.y; // keep closeness-to-the-goal-control in 2D
 
@@ -43,7 +43,7 @@ public class Navigation {
 
 	}
 
-	public bool goThere(){
+	public bool navigateAstarTo(Vector3 destination){
 
 		/* If Astar path exists I follow it */
 		if(isPathInProgress==true){
@@ -53,9 +53,9 @@ public class Navigation {
 					isPathInProgress = false; 
 					return true;
 				}
-				else isPathInProgress=true; // still not arrived
 			}
 		}
+		else computeAstar(destination);
 		return false;
 	}
 }

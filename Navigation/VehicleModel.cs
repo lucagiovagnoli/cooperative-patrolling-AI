@@ -9,6 +9,7 @@ public enum modelType {
 
 public interface VehicleModel{
 	bool updateModel(Vector3 to); // returns true if model updated, false otherwise (arrived)
+	void updateModel(Vector2 keyboardInput); // update model by keyboardInput
 	GameObject getVehicle();
 }
 
@@ -30,6 +31,9 @@ public class KinematicVehicleModel:VehicleModel{
 
 		return inProgress;
 	}
+	/* update model with Keyboard Input */
+	public void updateModel(Vector2 keyboardInput){}
+
 	public GameObject getVehicle(){return vehicle;}
 }
 
@@ -46,20 +50,6 @@ public class DifferentialVehicleModel:VehicleModel {
 	//	theta = vehicle.transform.rotation.eulerAngles.y;
 	}
 	
-	/* update model with Keyboard Input */
-/*	public void updateModel(Vector3 userInput){
-		float omega;
-		float v;
-
-		vehicle.rigidbody.useGravity = false;
-		omega = 4*userInput.x;
-		v = userInput.z;
-		//theta += omega*Time.deltaTime;
-		vehicle.rigidbody.angularVelocity = new Vector3(0.0f,omega,0.0f);
-		//vehicle.rigidbody.velocity = new Vector3(v*Mathf.Sin(theta),0.0f,v*Mathf.Cos(theta));
-		vehicle.rigidbody.velocity = v*vehicle.transform.forward*movK*Time.deltaTime;
-	}*/
-
 	/* update model with Targeted Input */
 	public bool updateModel(Vector3 to){
 		bool inProgress = controller.computeTargetedControl(vehicle.transform.forward,vehicle.transform.position,to);
@@ -70,7 +60,21 @@ public class DifferentialVehicleModel:VehicleModel {
 
 		return inProgress;
 	}
-			
+
+	/* update model with Keyboard Input */
+	public void updateModel(Vector2 keyboardInput){
+		float omega;
+		float v;
+
+		vehicle.rigidbody.useGravity = false;
+		omega = 4*keyboardInput.x;
+		v = 4*keyboardInput.y;
+		//theta += omega*Time.deltaTime;
+		vehicle.rigidbody.angularVelocity = new Vector3(0.0f,omega,0.0f);
+		//vehicle.rigidbody.velocity = new Vector3(v*Mathf.Sin(theta),0.0f,v*Mathf.Cos(theta));
+		vehicle.rigidbody.velocity = v*vehicle.transform.forward*MyUtils.movementK*Time.deltaTime;
+	}
+
 	public GameObject getVehicle(){return vehicle;}
 }
 
@@ -95,7 +99,11 @@ public class CarVehicleModel:VehicleModel {
 		vehicle.rigidbody.velocity = res.velocity*vehicle.transform.forward*MyUtils.movementK * Time.deltaTime;
 
 		return inProgress;
-	/*		vehicle.rigidbody.useGravity = false;
+	}
+
+	/* update model with Keyboard Input */
+	public void updateModel(Vector2 keyboardInput){
+		/*		vehicle.rigidbody.useGravity = false;
 			phi = userInput.x;
 			v = userInput.z;
 			omega = v/L * Mathf.Tan(phi);
@@ -105,6 +113,7 @@ public class CarVehicleModel:VehicleModel {
 			vehicle.rigidbody.velocity = v*vehicle.transform.forward*movK*Time.deltaTime;
 			break;	*/	
 	}
+
 
 	public GameObject getVehicle(){return vehicle;}
 }

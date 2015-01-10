@@ -5,12 +5,21 @@ using System.Collections.Generic;
 
 public class GeneticSearch {
 
-	private readonly static int ROUNDS = 2; //tournament ROUNDS
+	private static int ROUNDS = 2; //tournament ROUNDS
+	private static double MUTATION_RATE = 0.2f; //mutation probability in %
+
 	private Chromosome[] population;
 	private int N=0;
 	private Chromosome parent1 = null;
 	private Chromosome parent2 = null;
-	private Chromosome bestSolSoFar;
+	private Chromosome bestSolSoFar = new Chromosome();
+	private HashSet<Chromosome> populationMap = new HashSet<Chromosome>(); 
+
+
+	public static void setParameters(int rounds,double mutation_rate){
+		GeneticSearch.ROUNDS = rounds;
+		GeneticSearch.MUTATION_RATE = mutation_rate;
+	}
 
 	public GeneticSearch (int Nindividuals)
 	{
@@ -25,13 +34,15 @@ public class GeneticSearch {
 			Chromosome c = new Chromosome();
 			c.shuffleChromosome();
 			population[i] = c;
+			populationMap.Add(c);
 		}
-		debugPopulation();
 	}
 
 	public VRPsolution computeRoutes(int T /*T number of iterations*/){
 
-		for(int i=0;i<T;i++){
+		Debug.Log("Initial fitness: "+bestSolSoFar.getFitness());
+        
+        for(int i=0;i<T;i++){
 			/* PARENT SELECTION by TOURNAMENT SELECTION */
 			parent1 = population[tournamentSelectionBest(ROUNDS)];
 			parent2 = population[tournamentSelectionBest(ROUNDS)];
@@ -39,20 +50,32 @@ public class GeneticSearch {
 			/* ORDER Crossover - compute OFFSPRING*/
 			Chromosome[] children = parent1.orderCrossover(parent2);
 
-			/* MUTATION*/
-			children[0].mutation();
-			children[1].mutation();
+			/* MUTATION with MUTATION_RATE probability*/
+			if(MyUtils.rnd.NextDouble() < MUTATION_RATE){
+				children[0].mutation();
+				children[1].mutation();
+			}
 
-			/* REPLACEMENT of offspring by TOURNAMENT SELECTION */
-			population[tournamentSelectionWorst(ROUNDS)] = children[0];
-			population[tournamentSelectionWorst(ROUNDS)] = children[1];
-
-			/* update current best solution */
-			updateBestSolution(children[0]);
-			updateBestSolution(children[1]);
+			/* REPLACEMENT of offspring by TOURNAMENT SELECTION if they are not duplicates and update current best solution */
+            
+            if(populationMap.Contains(children[0])==false){
+				populationMap.Add(children[0]);
+				int removed1 = tournamentSelectionWorst(ROUNDS);
+				populationMap.Remove(population[removed1]);
+				population[removed1] = children[0];
+				updateBestSolution(children[0]);   
+            }
+            if(populationMap.Contains(children[1])==false){
+				populationMap.Add(children[1]);
+				int removed2 = tournamentSelectionWorst(ROUNDS);
+				populationMap.Remove(population[removed2]);
+				population[removed2] = children[1];
+				updateBestSolution(children[1]);
+                
+            }
 		}
 
-		debugPopulation();
+		//debugPopulation();
 		Debug.Log("After T="+ T +" iterations. \nBest Fitness: " + bestSolSoFar.getFitness()+"\nFinal Chromosome: "+ bestSolSoFar);
 
 		return bestSolSoFar.buildSolution();

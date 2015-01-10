@@ -50,7 +50,7 @@ public class VRPsolution{
 		foreach(VRPelement e in solution){
 			lastPoint = e.drone.transform.position;
 			foreach (Vector3 point in e.route){
-				Debug.DrawLine(lastPoint,point,Color.yellow,30.0f);
+				Debug.DrawLine(lastPoint,point,Color.yellow,400.0f);
 				lastPoint=point;
 			}
 		}
@@ -89,7 +89,7 @@ public class VRP {
 		//solution = randomSearcher.computeRoutes (1000);
 
 		GeneticSearch geneticSearch = new GeneticSearch (100);
-		solution = geneticSearch.computeRoutes (10000);
+		solution = geneticSearch.computeRoutes (100000);
 		solution.debugSolution ();
 	}
 

@@ -5,21 +5,24 @@ using System.Collections.Generic;
 /* Drone script takes care of following the VRP route */
 public class Drone : MonoBehaviour {
 
-	private static GameObject[] intruders = null;
+	private static GameObject[] intruders;
 
 	private bool intruderDetected = false;
 	private Vector3 intruderLastPosition;
 	private bool intruderCaptured = false;
 
-	private int d = 0;
-	private LinkedList<Vector3> route; 
+	private LinkedList<Vector3> route = null;
+	private LinkedList<Vector3> reversedRoute = null;
+	private LinkedList<Vector3>.Enumerator en;
 	private Navigation nav;
 	private bool isSegmentInProgress = false;
-	private bool isRouteLoaded = false;
-	
+	private int iteration = 0;
+
 	public void setRoute(LinkedList<Vector3> route){
 		this.route = route;
-		isRouteLoaded = true;
+		this.reversedRoute = new LinkedList<Vector3>();
+		en = this.route.GetEnumerator();
+		en.MoveNext();
 	}
 
 	// Use this for initialization
@@ -34,36 +37,41 @@ public class Drone : MonoBehaviour {
 	// Update is called once per frame
 	void FixedUpdate (){
 	
-		if(intruderCaptured==true)return;
+		if(intruderCaptured==true) return;
 		if(intruderDetected == true) pursuitIntruder();
 
-		else if (isRouteLoaded == true && route.Count>0) { /* if route is loaded then follow route */
-			if(isSegmentInProgress==false){ /* if route still to be started, compute Astar */
-				nav.computeAstar(route.First.Value);
-				isSegmentInProgress = true;
-			}
-
-			/* GO TO customer using Astar */
-			if(nav.goThere()==true){ /* returns true if completed, otherwise moves towards the goal*/
-				route.RemoveFirst(); 
-				if(route.Count==0){ /* if route is completed, init everthing to false again*/
-					isSegmentInProgress = false;
-					isRouteLoaded = false;
-				}
-				isSegmentInProgress = false;
-			}
+		/* if route is loaded then follow route */
+		else if (route!=null){
+			if (route.Count>1) followRoute();
+			else if (route.Count==1) nav.navigateAstarTo(en.Current);
 		}
 		else nav.stop();
 	}
 
+	private void followRoute(){
+
+		/* GO TO customer using Astar */
+		if(nav.navigateAstarTo(en.Current) == true){ /* returns true if completed, otherwise moves towards the goal*/
+			if(iteration == 0) reversedRoute.AddFirst(en.Current);
+
+			/* ROUTE COMPLETED? -> set enumerator to scan the reversed list and firstRun to false*/
+			if(en.MoveNext() == false){ 
+				if(iteration%2 == 0) en = reversedRoute.GetEnumerator();
+				else en = route.GetEnumerator();
+				en.MoveNext();en.MoveNext();
+				iteration++;
+			}
+		}
+	}
+
+
 	private void checkVisibility(Vector3 intruderPosition){
-		Debug.Log("visibility check");
 		RaycastHit hitPoint; //hitPoint ready to be filled with the info about where the ray hit the collider 
 		Ray raggio = new Ray(this.transform.position+new Vector3(0,0.1f,0),intruderPosition-this.transform.position+new Vector3(0,0.1f,0));
 		Debug.DrawRay(this.transform.position+new Vector3(0,0.1f,0),intruderPosition-this.transform.position+new Vector3(0,0.1f,0),Color.red);
 		if(Physics.Raycast(raggio,out hitPoint)==true){
 			if(hitPoint.collider.tag == "intruder"){
-				Debug.Log("intruder detected");
+				//Debug.Log("intruder detected");
 				this.intruderDetected = true;
 				this.intruderLastPosition = intruderPosition;
 			}
@@ -77,7 +85,7 @@ public class Drone : MonoBehaviour {
 
 	/* IF INTRUDER DETECTED -> PURSUIT HIM */
 	private void pursuitIntruder(){
-		nav.navigateFromATo(intruderLastPosition);
+		nav.navigateEuclideanTo(intruderLastPosition);
 	}
 
 	/* when a drone is within range of detection, need to check if it is also visible */
@@ -104,6 +112,14 @@ public class Drone : MonoBehaviour {
 		}
 	}
 
+	void OnDrawGizmos(){
+		Gizmos.color = Color.cyan;
+        if(intruderDetected==true)  {
+			Gizmos.DrawLine(transform.position, intruderLastPosition);
+		}
+		Gizmos.DrawSphere (Vector3.zero,150);
+    }
+    
 }
 
 

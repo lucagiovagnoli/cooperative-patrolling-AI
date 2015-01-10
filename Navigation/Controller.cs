@@ -125,11 +125,11 @@ public class MouseInput{
 }
 
 public class KeyboardInput {
-	Vector3 input = new Vector3(0,0,0);
+	Vector2 input = new Vector2(0,0);
 	
-	public Vector3 getOutput(){
+	public Vector2 getOutput(){
 		input.x = Input.GetAxis ("Horizontal");
-		input.z = Input.GetAxis ("Vertical");
+		input.y = Input.GetAxis ("Vertical");
 		return input;
 	}
 }
