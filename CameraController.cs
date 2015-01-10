@@ -4,16 +4,19 @@ using System.Collections;
 public class CameraController : MonoBehaviour {
 
 	KeyboardInput userKeyInput = new KeyboardInput();
-	VehicleModel camera;
 
-	// Use this for initialization
 	void Start () {
-		camera = new DifferentialVehicleModel(this.gameObject);
 	}
 	
-	// Update is called once per frame
 	void Update () {
 
-		camera.updateModel(userKeyInput.getOutput());
+		this.rigidbody.velocity = this.transform.forward*200* Input.GetAxis("Mouse ScrollWheel");
+		Vector3 newPosition = this.transform.position + 15*userKeyInput.getOutput()*Time.deltaTime;
+
+		if(newPosition.x>ConvexCover.upperLeftCorner.x && newPosition.x<ConvexCover.lowestRightCorner.x &&
+		   newPosition.z<ConvexCover.upperLeftCorner.z && newPosition.z>ConvexCover.lowestRightCorner.z){
+			this.transform.position = newPosition;
+		}
+
 	}
 }

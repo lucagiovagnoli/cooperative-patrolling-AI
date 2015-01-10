@@ -29,7 +29,7 @@ public class Navigation {
 		this.goalPosition.y = model.getVehicle().transform.position.y; // keep closeness-to-the-goal-control in 2D
 
 		/* compute Astar */
-		pathFinder = new Astar(MyUtils.precisionAstar,MyUtils.droneRadius,true);
+		pathFinder = new Astar(MyUtils.precisionAstar,MyUtils.droneRadius,false);
 		if(pathFinder.setNewTargetPosition(goalPosition)==true){ //set the target for A* algorithm
 			pathFinder.AstarBestPathFrom(model.getVehicle().transform.position);
 			path = pathFinder.getSolution();

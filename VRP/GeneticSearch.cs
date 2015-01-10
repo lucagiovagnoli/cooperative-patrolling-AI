@@ -6,7 +6,7 @@ using System.Collections.Generic;
 public class GeneticSearch {
 
 	private static int ROUNDS = 2; //tournament ROUNDS
-	private static double MUTATION_RATE = 0.2f; //mutation probability in %
+	private static double MUTATION_RATE = 0.1f; //mutation probability in %
 
 	private Chromosome[] population;
 	private int N=0;
@@ -35,6 +35,7 @@ public class GeneticSearch {
 			c.shuffleChromosome();
 			population[i] = c;
 			populationMap.Add(c);
+			updateBestSolution(c);
 		}
 	}
 

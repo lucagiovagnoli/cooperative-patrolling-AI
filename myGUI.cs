@@ -9,12 +9,11 @@ public class myGUI : MonoBehaviour {
 
 	private Drone[] drones;
 	private Vector3[] customers;
-    private LinkedList<GameObject> userInputCustomersList = new LinkedList<GameObject>();
+	private LinkedList<Collider> userInputCustomersList = new LinkedList<Collider>();
 
 	private MouseInput mouse = new MouseInput(MouseInput.clickType.middle);
 
 	private	ConvexCover convexCover;
-	private bool isExpanding = false;
     private bool isPositioning = false;
 	private bool isAutomaticConvexCover = false; 
 
@@ -28,7 +27,6 @@ public class myGUI : MonoBehaviour {
 		}
 	
 		convexCover = new ConvexCover (this.gameObject);
-		isExpanding = true;
            
 		//	Tester tester = new Tester (new Vector3[5],drones);
 		//	tester.testEquality();
@@ -45,37 +43,41 @@ public class myGUI : MonoBehaviour {
 			this.customers[i] = c[i].transform.position;
 		}*/
 
-        if(isAutomaticConvexCover==true && isExpanding==true){
-			convexCover.cover();
+        if(isAutomaticConvexCover==true){
+			if(convexCover.cover()==true) {
+				LinkedList<Collider> convexColliders = convexCover.getSolution();
+				foreach(Collider c in convexColliders){
+					this.userInputCustomersList.AddLast(((GameObject) Instantiate(original, c.bounds.center, original.transform.rotation)).collider);
+                }
+				isAutomaticConvexCover = false;
+			}
 		}
 
         if(isPositioning==true && mouse.isMouseInputReady()){
 			Vector3 newPatrolPosition = mouse.getOutput();
 			newPatrolPosition.y += 0.2f;
-			this.userInputCustomersList.AddLast((GameObject) Instantiate(original, newPatrolPosition, original.transform.rotation));
+			this.userInputCustomersList.AddLast(((GameObject) Instantiate(original, newPatrolPosition, original.transform.rotation)).collider);
 		}
 	}
-
 
 	void OnGUI(){
 
 		GUI.Box (new Rect (10,10,300,150), "Menu");
 
 		if (GUI.Button (new Rect (30, 30, 200, 30), "Compute convex covers")) {
-			/*foreach(GameObject go in this.userInputCustomersList){
+			foreach(Collider go in this.userInputCustomersList){
 				Destroy(go); // destroy old customers
 			}
-			userInputCustomersList = new LinkedList<GameObject>();*/
+			userInputCustomersList = new LinkedList<Collider>();
 			infoText.text = "Calculating Convex Covers";
             isAutomaticConvexCover = true;
         }
         
-        
         if (GUI.Button (new Rect (30, 70, 200, 30), "Set covers manually")) {
-			foreach(GameObject go in this.userInputCustomersList){
+			foreach(Collider go in this.userInputCustomersList){
 				Destroy(go); // destroy old customers
 			}
-			userInputCustomersList = new LinkedList<GameObject>();
+			userInputCustomersList = new LinkedList<Collider>();
 			infoText.text = "Set guarding positions by middle mouse click";
 			isPositioning = true;
 		}
@@ -86,7 +88,7 @@ public class myGUI : MonoBehaviour {
 			/*get customers*/
 			this.customers = new Vector3[userInputCustomersList.Count];
 			int i=0;
-			foreach(GameObject go in this.userInputCustomersList){
+			foreach(Collider go in this.userInputCustomersList){
                 this.customers[i] = go.transform.position;
 				i++;
 			}

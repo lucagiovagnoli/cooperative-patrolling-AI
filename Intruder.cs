@@ -19,5 +19,5 @@ public class Intruder : MonoBehaviour {
 		}
 		vehicleModel.updateModel (targetPosition); 
 	}
-	
+
 }

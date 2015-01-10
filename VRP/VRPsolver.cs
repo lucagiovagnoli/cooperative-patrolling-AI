@@ -89,7 +89,7 @@ public class VRP {
 		//solution = randomSearcher.computeRoutes (1000);
 
 		GeneticSearch geneticSearch = new GeneticSearch (100);
-		solution = geneticSearch.computeRoutes (100000);
+		solution = geneticSearch.computeRoutes (10000);
 		solution.debugSolution ();
 	}
 

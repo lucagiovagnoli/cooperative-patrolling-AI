@@ -164,7 +164,7 @@ public class Chromosome /* : IComparable<Chromosome>*/{
 		for (i=0; i<Ngenes; i++) {
 			if(isDrone(genes[i])) {
 				lastPoint = genes[i];
-                i++; // start from first customer
+				i++; i=i%Ngenes;// start from first customer
                 break;
             }
         }
@@ -188,7 +188,7 @@ public class Chromosome /* : IComparable<Chromosome>*/{
         }
         
 		//return maxSoFar+tot takes into account also the total length
-		return maxSoFar+tot*0.01f;
+		return maxSoFar+tot/M/2;
     }
     
     /* Euclidean compute Fitness
@@ -235,7 +235,7 @@ public class Chromosome /* : IComparable<Chromosome>*/{
 				/* first drone, first solution */
 				currentDrone = drones[genes[i]-N];
 				route = new LinkedList<Vector3>();
-				i++; // start from first customer
+				i++; i=i%Ngenes; // start from first customer
 				break;
 			}
 		}

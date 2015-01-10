@@ -25,6 +25,7 @@ public static class MyUtils{
 	public readonly static float slerpRotationSpeed = 0.1f;
 	public readonly static Collider pavementCollider = GameObject.FindGameObjectWithTag("pavement").collider;
 
+
 	/* the Fisher-Yates shuffle modern algorithm IN PLACE */
 	public static void FisherYatesShuffle(int [] array){
 		int N = array.Length;

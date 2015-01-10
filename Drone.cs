@@ -5,12 +5,10 @@ using System.Collections.Generic;
 /* Drone script takes care of following the VRP route */
 public class Drone : MonoBehaviour {
 
-	private static GameObject[] intruders;
-
 	private bool intruderDetected = false;
 	private Vector3 intruderLastPosition;
 	private bool intruderCaptured = false;
-
+	
 	private LinkedList<Vector3> route = null;
 	private LinkedList<Vector3> reversedRoute = null;
 	private LinkedList<Vector3>.Enumerator en;
@@ -28,7 +26,6 @@ public class Drone : MonoBehaviour {
 	// Use this for initialization
 	void Start (){
 		this.nav = new Navigation (this.gameObject);
-		intruders = GameObject.FindGameObjectsWithTag("intruder");
 		SphereCollider sc =	gameObject.AddComponent("SphereCollider") as SphereCollider;
 		sc.radius = MyUtils.maxRangeScanner;
 		sc.isTrigger = true;
@@ -100,7 +97,7 @@ public class Drone : MonoBehaviour {
 		/* check if collided with the intruder and if it was already 
 		 * detected because it means we got into the second collider */
 		if(other.tag=="intruder" && intruderDetected==true) { 
-			Debug.Log("Intruder Captured TRIGGER");
+			Debug.Log("Intruder Captured");
 			nav.stop();
 			intruderCaptured=true;
 		}
@@ -117,7 +114,7 @@ public class Drone : MonoBehaviour {
         if(intruderDetected==true)  {
 			Gizmos.DrawLine(transform.position, intruderLastPosition);
 		}
-		Gizmos.DrawSphere (Vector3.zero,150);
+		Gizmos.DrawSphere (Vector3.zero,150.0f);
     }
     
 }
