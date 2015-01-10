@@ -10,15 +10,20 @@
 using UnityEngine;
 using System;
 
-public class MyUtils{
+public static class MyUtils{
 			
 	public static System.Random rnd = new System.Random();
+	public readonly static float vehiclesMaxVelocity = 2.0f; //controllers dont use velocity over this value
+	public readonly static float vehicleMinVelocity = 0.2f; //controllers dont use velocity under this value
+	public readonly static float epsilonMinDistance = 0.1f; //under this distance the controllers stop the vehicle
+	public readonly static float maxRangeScanner = 150.0f;
+	
+	public readonly static float precisionAstar = 0.2f;
+	public readonly static float droneRadius = 0.5f;
+	public readonly static float movementK = 20.0f;
 
-	public MyUtils (){
-
-
-	}
-
+	public readonly static float slerpRotationSpeed = 0.1f;
+	public readonly static Collider pavementCollider = GameObject.FindGameObjectWithTag("pavement").collider;
 
 	/* the Fisher-Yates shuffle modern algorithm IN PLACE */
 	public static void FisherYatesShuffle(int [] array){
@@ -35,7 +40,13 @@ public class MyUtils{
 		if ((other-first).magnitude < distanceParameter) return true;
 		return false;
 	}
-	
+
+	public static float myClampVelocity(float velocity){
+		if (velocity > MyUtils.vehiclesMaxVelocity) return MyUtils.vehiclesMaxVelocity;
+		else if (velocity < MyUtils.vehicleMinVelocity) return MyUtils.vehicleMinVelocity;
+		else return velocity;
+	}
+
 }
 
 

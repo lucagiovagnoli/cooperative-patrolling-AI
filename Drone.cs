@@ -6,8 +6,10 @@ using System.Collections.Generic;
 public class Drone : MonoBehaviour {
 
 	private static GameObject[] intruders = null;
-	private static float maxRange = 100.0f;
-	private readonly static int FREQ_PER_UPDATE = 1;
+
+	private bool intruderDetected = false;
+	private Vector3 intruderLastPosition;
+	private bool intruderCaptured = false;
 
 	private int d = 0;
 	private LinkedList<Vector3> route; 
@@ -24,12 +26,18 @@ public class Drone : MonoBehaviour {
 	void Start (){
 		this.nav = new Navigation (this.gameObject);
 		intruders = GameObject.FindGameObjectsWithTag("intruder");
+		SphereCollider sc =	gameObject.AddComponent("SphereCollider") as SphereCollider;
+		sc.radius = MyUtils.maxRangeScanner;
+		sc.isTrigger = true;
 	}
 
 	// Update is called once per frame
-	void Update (){
+	void FixedUpdate (){
 	
-		if (isRouteLoaded == true && route.Count>0) { /* if route is loaded then follow route */
+		if(intruderCaptured==true)return;
+		if(intruderDetected == true) pursuitIntruder();
+
+		else if (isRouteLoaded == true && route.Count>0) { /* if route is loaded then follow route */
 			if(isSegmentInProgress==false){ /* if route still to be started, compute Astar */
 				nav.computeAstar(route.First.Value);
 				isSegmentInProgress = true;
@@ -45,32 +53,56 @@ public class Drone : MonoBehaviour {
 				isSegmentInProgress = false;
 			}
 		}
-
-		for(int i=0;i<FREQ_PER_UPDATE;i++) isIntruderDetected ();
+		else nav.stop();
 	}
 
-	/* check for intruder by 360° camera analysis of footage 
-	* (could be human analysing footage or computer vision tecniques) */
-	private void isIntruderDetected(){
-		Vector3 origin = this.transform.position; origin.y += 0.3f;
-		Vector3 direction = new Vector3 (1,0,1);
+	private void checkVisibility(Vector3 intruderPosition){
+		Debug.Log("visibility check");
 		RaycastHit hitPoint; //hitPoint ready to be filled with the info about where the ray hit the collider 
-		direction = Quaternion.Euler(0, (d++)%360, 0) * direction;
-		direction.Normalize ();
-		Ray raggio = new Ray(origin,direction);
-
-		foreach(GameObject intruderCollider in intruders){
-			if (intruderCollider.collider.Raycast(raggio,out hitPoint,maxRange)){
-				Debug.Log("Intruder Detected at: "+hitPoint.point);		
-				Debug.DrawRay(origin,direction*maxRange,Color.red,0.2f);
-				/* PERFORM INTRUDER PURSUIT */
+		Ray raggio = new Ray(this.transform.position+new Vector3(0,0.1f,0),intruderPosition-this.transform.position+new Vector3(0,0.1f,0));
+		Debug.DrawRay(this.transform.position+new Vector3(0,0.1f,0),intruderPosition-this.transform.position+new Vector3(0,0.1f,0),Color.red);
+		if(Physics.Raycast(raggio,out hitPoint)==true){
+			if(hitPoint.collider.tag == "intruder"){
+				Debug.Log("intruder detected");
+				this.intruderDetected = true;
+				this.intruderLastPosition = intruderPosition;
 			}
-			else Debug.DrawRay(origin,direction*maxRange,Color.white,0.2f);
+			else this.intruderDetected = false;
 		}
 	}
 
-	/* IF INTRUDER DETECTED -> PURSUIT HIM */
+	private void setOutOfLineOfSight(){
+		this.intruderDetected = false;
+	}
 
+	/* IF INTRUDER DETECTED -> PURSUIT HIM */
+	private void pursuitIntruder(){
+		nav.navigateFromATo(intruderLastPosition);
+	}
+
+	/* when a drone is within range of detection, need to check if it is also visible */
+	void OnTriggerStay(Collider other){
+		if(other.tag == "intruder"){
+			checkVisibility(other.transform.position);
+		}
+	}
+	
+	/* if intruder gets into drone or viceversa, the intruder has been captured and the drone stops.*/
+	void OnTriggerEnter(Collider other){
+		/* check if collided with the intruder and if it was already 
+		 * detected because it means we got into the second collider */
+		if(other.tag=="intruder" && intruderDetected==true) { 
+			Debug.Log("Intruder Captured TRIGGER");
+			nav.stop();
+			intruderCaptured=true;
+		}
+	}
+
+	void OnTriggerExit(Collider other){
+		if(other.tag == "intruder"){
+			intruderDetected = false;
+		}
+	}
 
 }
 
